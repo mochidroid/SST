@@ -80,8 +80,10 @@ class BandMinMaxQuantileStateful(BaseNormalizer):
         self.q = torch.tensor(q_global, dtype=torch.float32).T[..., None, None]
 
     def transform(self, x):
-        x = torch.minimum(x, self.q[1])
-        x = torch.maximum(x, self.q[0])
+        # x = torch.minimum(x, self.q[1])
+        # x = torch.maximum(x, self.q[0])
+        x = torch.min(x, self.q[1])
+        x = torch.max(x, self.q[0])
         return (x - self.q[0]) / (self.epsilon + (self.q[1] - self.q[0]))
 
 

@@ -106,23 +106,54 @@ def createDCmall():
         strides=[(191, 16, 16), (191, 8, 8), (191, 8, 8)],          
         load=scio.loadmat, augment=True,
     )
-    
-def createApex():
+
+def createApex(band=210):
     print('create apex...')
-    datadir = '/data/HSI_Data/Hyperspectral_Project/apex_crop/'
+    datadir = f"./data/apex_{band}/apex_crop/"
     
     fns = os.listdir(datadir) 
     create_lmdb_train(
-        datadir, fns, '/data/HSI_Data/Hyperspectral_Project/apex', 'data',  # your own dataset address
+        datadir, fns, f"./data/apex_{band}", 'data',  # your own dataset address
         crop_sizes=None,
         scales=(1, 0.5,0.5,0.25),        
-        ksizes=(210, 64, 64),
-        strides=[(210, 64, 64),(210, 32, 32), (210, 32, 32), (210, 16, 16)],          
+        ksizes=(band, 64, 64),
+        strides=[(band, 64, 64),(band, 32, 32), (band, 32, 32), (band, 16, 16)],          
         load=scio.loadmat, augment=True,
     )
+    
+# def createApex():
+#     print('create apex...')
+#     datadir = '/data/HSI_Data/Hyperspectral_Project/apex_crop/'
+    
+#     fns = os.listdir(datadir) 
+#     create_lmdb_train(
+#         datadir, fns, '/data/HSI_Data/Hyperspectral_Project/apex', 'data',  # your own dataset address
+#         crop_sizes=None,
+#         scales=(1, 0.5,0.5,0.25),        
+#         ksizes=(210, 64, 64),
+#         strides=[(210, 64, 64),(210, 32, 32), (210, 32, 32), (210, 16, 16)],          
+#         load=scio.loadmat, augment=True,
+#     )
 
 if __name__ == '__main__':
-    #createApex()
-    createDCmall()
-    create_icvl64_31()
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Create LMDB dataset')
+    parser.add_argument('--band', type=int, default=210, help='Number of spectral bands to use for APEX')
+    parser.add_argument('--target', type=str, default='apex', choices=['apex', 'dc', 'icvl', 'all_apex'], help='Which dataset to generate')
+
+    args = parser.parse_args()
+
+    if args.target == 'apex':
+        createApex(band=args.band)
+    elif args.target == 'all_apex':
+        for b in [188, 99, 128]:
+            createApex(band=b)
+    elif args.target == 'dc':
+        createDCmall()
+    elif args.target == 'icvl':
+        create_icvl64_31()
+    # #createApex()
+    # createDCmall()
+    # create_icvl64_31()
     pass

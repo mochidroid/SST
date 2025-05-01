@@ -9,27 +9,31 @@ from util import crop_center, Visualize3D, minmax_normalize, rand_crop,BandMinMa
 from PIL import Image
 from skimage import io
 import torch
-from spectral import *
-data_path = '/data/HSI_Data/'  #change to datadir
+# from spectral import *
+from spectral import open_image
+# data_path = '/data/HSI_Data/'  #change to datadir
+data_path = './data/'  #change to datadir
 
-def hdr_to_mat():
-    imgpath = data_path+'/Hyperspectral_Project/Apex/APEX_OSD_V1_calibr_cube'
+# def hdr_to_mat():
+def hdr_to_mat(band):
+    # imgpath = data_path+'/Hyperspectral_Project/Apex/APEX_OSD_V1_calibr_cube'
+    imgpath = data_path+'APEX_OSD_Package_1.0/APEX_OSD_V1_calibr_cube'
     
     img = open_image(imgpath+'.hdr')
     img = img.load()
     img = img.transpose((2,0,1))
 
-    apex210 = img[:210]
-    print('load hdr image and save as mat from ',img.shape, ' to ', apex210.shape)
-   # savemat(data_path+"Hyperspectral_Project/apex_210.mat", {'data': apex210})
+    apex = img[:band]
+    print('load hdr image and save as mat from ',img.shape, ' to ', apex.shape)
+    savemat(f"{data_path}apex_{band}/apex_{band}.mat", {'data': apex})
 
-def create_big_apex_dataset():
-    #hdr_to_mat()  #process the hdr file
+def create_big_apex_dataset(band=210):
+    hdr_to_mat(band)  #process the hdr file
     total_num = 20
     print('processing---')
-    all_data = loadmat(data_path+'Hyperspectral_Project/apex_210.mat')['data']
+    all_data = loadmat(f"{data_path}apex_{band}/apex_{band}.mat")['data']
     print(all_data.shape)
-    save_dir = data_path+'Hyperspectral_Project/apex_crop/'
+    save_dir = f"{data_path}apex_{band}/apex_crop/"
     for i in range(total_num):
         data = rand_crop(all_data, 512, 512)
         savemat(save_dir+str(i)+'.mat',{'data': data})
@@ -82,10 +86,10 @@ def create_WDC_dataset():
     normalizer.fit([val])
     val = normalizer.transform(val).cpu().numpy()
 
-    savemat("/WDC/train/train_0.mat", {'data': train_0})
-    savemat("WDC/train/train_1.mat", {'data': train_1})
-    savemat("WDC/test/test.mat", {'data': test})
-    savemat("WDC/val/val.mat", {'data': val})
+    savemat("./data/WDC/train/train_0.mat", {'data': train_0})
+    savemat("./data/WDC/train/train_1.mat", {'data': train_1})
+    savemat("./data/WDC/test/test.mat", {'data': test})
+    savemat("./data/WDC/val/val.mat", {'data': val})
 
 def create_icvl_sr():
     basedir = data_path
@@ -118,9 +122,18 @@ def create_Urban_test():
 
 
 if __name__ == '__main__':
-    #create_big_apex_dataset()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Create cropped APEX dataset with limited bands")
+    parser.add_argument('--band', type=int, default=210, help='Number of spectral bands to keep')
+    args = parser.parse_args()
+
+    # band = 188
+    # band = 99
+    # band = 128
+    create_big_apex_dataset(band=args.band)
     #create_icvl_sr()
-    #create_WDC_dataset()
+    # create_WDC_dataset()
     #create_Urban_test()
-    hdr_to_mat()
+    # hdr_to_mat()
 
